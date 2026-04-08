@@ -150,18 +150,30 @@ if not df.empty:
     # ================= MINGGUAN =================
     st.subheader("📅 Mingguan")
     df["Minggu"] = df["tanggal"].dt.to_period("W").apply(lambda r: r.start_time)
+    df["jumlah"] = pd.to_numeric(df["jumlah"], errors="coerce").fillna(0)
     mingguan = df.groupby(["Minggu", "jenis"]) ["jumlah"].sum().unstack().fillna(0)
     mingguan["Saldo"] = mingguan.get("Pemasukan", 0) - mingguan.get("Pengeluaran", 0)
 
-    st.dataframe(mingguan.applymap(format_rupiah))
+    mingguan_display = mingguan.copy()
+
+    for col in mingguan_display.columns:
+           mingguan_display[col] = mingguan_display[col].apply(format_rupiah)
+
+    st.dataframe(mingguan_display)
 
     # ================= BULANAN =================
     st.subheader("📆 Bulanan")
     df["Bulan"] = df["tanggal"].dt.to_period("M")
+    df["jumlah"] = pd.to_numeric(df["jumlah"], errors="coerce").fillna(0)
     bulanan = df.groupby(["Bulan", "jenis"]) ["jumlah"].sum().unstack().fillna(0)
     bulanan["Saldo"] = bulanan.get("Pemasukan", 0) - bulanan.get("Pengeluaran", 0)
 
-    st.dataframe(bulanan.applymap(format_rupiah))
+    bulanan_display = bulanan.copy()
+
+    for col in bulanan_display.columns:
+        bulanan_display[col] = bulanan_display[col].apply(format_rupiah)
+
+    st.dataframe(bulanan_display)
 
 else:
     st.info("Belum ada data")
