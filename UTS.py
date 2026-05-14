@@ -178,6 +178,44 @@ if not df.empty:
 else:
     st.info("Belum ada data")
 
+# ================= FITUR TAMBAHAN: EDIT DATA =================
+st.write("---")
+st.subheader("✏️ Edit Transaksi")
+
+if not df.empty:
+    # 1. Pilih ID yang mau diedit
+    edit_id = st.selectbox("Pilih ID Transaksi yang ingin diperbaiki", df["id"].tolist(), key="edit_select")
+    
+    # 2. Ambil data lama dari database berdasarkan ID
+    data_lama = df[df["id"] == edit_id].iloc[0]
+    
+    col_e1, col_e2, col_e3 = st.columns(3)
+    with col_e1:
+        new_tgl = st.date_input("Tanggal Baru", value=pd.to_datetime(data_lama["tanggal"]), key="e_tgl")
+    with col_e2:
+        # Mencari index kategori lama agar otomatis terpilih di selectbox
+        list_jenis = ["Pemasukan", "Pengeluaran"]
+        idx_lama = list_jenis.index(data_lama["jenis"])
+        new_jenis = st.selectbox("Jenis Baru", list_jenis, index=idx_lama, key="e_jenis")
+    with col_e3:
+        new_jumlah = st.number_input("Jumlah Baru (Rp)", min_value=0, value=int(data_lama["jumlah"]), step=1000, key="e_jml")
+
+    if st.button("Update Data"):
+        try:
+            c.execute("""
+                UPDATE transaksi 
+                SET tanggal = ?, jenis = ?, jumlah = ? 
+                WHERE id = ? AND username = ?
+            """, (str(new_tgl), new_jenis, int(new_jumlah), int(edit_id), st.session_state.user))
+            
+            conn.commit()
+            st.success(f"Berhasil! Data ID {edit_id} telah diperbarui.")
+            st.rerun() # Refresh tampilan
+        except Exception as e:
+            st.error(f"Gagal update: {e}")
+else:
+    st.info("Tidak ada data untuk diedit.")
+
 # ================= LOGOUT =================
 if st.button("Logout"):
     st.session_state.login = False
